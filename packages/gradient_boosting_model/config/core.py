@@ -1,7 +1,7 @@
 from pathlib import Path
 import typing as t
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from strictyaml import load, YAML
 
 import gradient_boosting_model
@@ -50,7 +50,7 @@ class ModelConfig(BaseModel):
     allowed_loss_functions: t.Tuple[str, ...]
     loss: str
 
-    @validator("loss")
+    @field_validator("loss")
     def allowed_loss_function(cls, value, values):
         """
         Loss function to be optimized.
@@ -64,14 +64,14 @@ class ModelConfig(BaseModel):
         `ls` and `huber` for this model.
         """
 
-        allowed_loss_functions = values.get("allowed_loss_functions")
+        # Accessing the allowed_loss_functions field directly
+        allowed_loss_functions = values.data.get('allowed_loss_functions', [])
         if value in allowed_loss_functions:
             return value
         raise ValueError(
             f"the loss parameter specified: {value}, "
             f"is not in the allowed set: {allowed_loss_functions}"
         )
-
 
 class Config(BaseModel):
     """Master config object."""

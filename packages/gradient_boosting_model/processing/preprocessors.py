@@ -4,99 +4,184 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class SklearnTransformerWrapper(BaseEstimator, TransformerMixin):
     """
-    Wrapper for Scikit-learn pre-processing transformers,
-    like the SimpleImputer() or OrdinalEncoder(), to allow
-    the use of the transformer on a selected group of variables.
+    Wrapper for Scikit-learn pre-processing transformers, like SimpleImputer or OrdinalEncoder,
+    to apply the transformer to a specified set of variables.
+
+    Parameters:
+    ----------
+    variables : list or str
+        List of variables to transform. If a single variable, pass it as a string.
+    transformer : sklearn Transformer
+        A scikit-learn transformer instance (e.g., SimpleImputer, OrdinalEncoder).
     """
 
     def __init__(self, variables=None, transformer=None):
-        if variables is None or transformer is None:
+        if not variables or not transformer:
             raise ValueError("Both 'variables' and 'transformer' must be provided.")
-        self.variables = (
-            variables if isinstance(variables, list) else [variables]
-        )  # Ensure variables is always a list
+        self.variables = variables if isinstance(variables, list) else [variables]
         self.transformer = transformer
 
     def fit(self, X: pd.DataFrame, y: pd.Series = None):
         """
-        The `fit` method allows scikit-learn transformers to
-        learn the required parameters from the training dataset.
+        Fits the transformer to the selected variables.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : pd.Series, optional
+            The target variable, by default None.
+
+        Returns:
+        -------
+        self
         """
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input must be a pandas DataFrame.")
+        self._validate_dataframe(X)
         self.transformer.fit(X[self.variables])
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Apply the transformations to the DataFrame."""
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input must be a pandas DataFrame.")
+        """
+        Transforms the selected variables.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+
+        Returns:
+        -------
+        pd.DataFrame
+            Transformed DataFrame.
+        """
+        self._validate_dataframe(X)
         X = X.copy()
         X[self.variables] = self.transformer.transform(X[self.variables])
         return X
 
+    @staticmethod
+    def _validate_dataframe(X):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("Input must be a pandas DataFrame.")
+
 
 class TemporalVariableEstimator(BaseEstimator, TransformerMixin):
     """
-    Calculates the time difference between 2 temporal variables.
+    Calculates the time difference between temporal variables and a reference variable.
+
+    Parameters:
+    ----------
+    variables : list or str
+        List of temporal variables for which to calculate the time difference.
+    reference_variable : str
+        The reference temporal variable.
     """
 
     def __init__(self, variables=None, reference_variable=None):
-        if variables is None or reference_variable is None:
+        if not variables or not reference_variable:
             raise ValueError("Both 'variables' and 'reference_variable' must be provided.")
-        self.variables = (
-            variables if isinstance(variables, list) else [variables]
-        )  # Ensure variables is always a list
+        self.variables = variables if isinstance(variables, list) else [variables]
         self.reference_variable = reference_variable
 
     def fit(self, X: pd.DataFrame, y=None):
         """
-        The `fit` method is necessary to accommodate the
-        scikit-learn pipeline functionality.
+        No fitting needed; returns self for pipeline compatibility.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : pd.Series, optional
+            The target variable, by default None.
+
+        Returns:
+        -------
+        self
         """
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input must be a pandas DataFrame.")
+        self._validate_dataframe(X)
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculate time differences and return a modified DataFrame.
+        Calculates the time difference and updates the DataFrame.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+
+        Returns:
+        -------
+        pd.DataFrame
+            Transformed DataFrame with time differences.
         """
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input must be a pandas DataFrame.")
+        self._validate_dataframe(X)
         X = X.copy()
         for feature in self.variables:
             X[feature] = X[self.reference_variable] - X[feature]
         return X
 
+    @staticmethod
+    def _validate_dataframe(X):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("Input must be a pandas DataFrame.")
+
 
 class DropUnnecessaryFeatures(BaseEstimator, TransformerMixin):
     """
-    Drops unnecessary or unused features from the dataset.
+    Drops unnecessary features from a DataFrame.
+
+    Parameters:
+    ----------
+    variables_to_drop : list or str
+        List of variables to drop. If a single variable, pass it as a string.
     """
 
     def __init__(self, variables_to_drop=None):
-        if variables_to_drop is None:
+        if not variables_to_drop:
             raise ValueError("'variables_to_drop' must be provided.")
         self.variables = (
             variables_to_drop if isinstance(variables_to_drop, list) else [variables_to_drop]
-        )  # Ensure variables_to_drop is always a list
+        )
 
     def fit(self, X: pd.DataFrame, y=None):
         """
-        The `fit` method is necessary to accommodate the
-        scikit-learn pipeline functionality.
+        No fitting needed; returns self for pipeline compatibility.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : pd.Series, optional
+            The target variable, by default None.
+
+        Returns:
+        -------
+        self
         """
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input must be a pandas DataFrame.")
+        self._validate_dataframe(X)
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Drop unnecessary or unused features from the dataset.
+        Drops the specified variables from the DataFrame.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+
+        Returns:
+        -------
+        pd.DataFrame
+            DataFrame with specified variables dropped.
         """
+        self._validate_dataframe(X)
+        X = X.copy()
+        return X.drop(columns=self.variables, errors="ignore")
+
+    @staticmethod
+    def _validate_dataframe(X):
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input must be a pandas DataFrame.")
-        X = X.copy()
-        X.drop(self.variables, axis=1)
-        return X
+
