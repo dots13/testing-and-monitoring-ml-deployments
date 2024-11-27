@@ -67,3 +67,4 @@ price_pipe = Pipeline(
         ),
     ]
 )
+
