@@ -1,5 +1,3 @@
-import typing as t
-
 from gradient_boosting_model.config.core import config
 
 import numpy as np
@@ -93,9 +91,12 @@ class HouseDataInputSchema(Schema):
 def drop_na_inputs(*, input_data: pd.DataFrame) -> pd.DataFrame:
     """Check model inputs for na values and filter."""
     validated_data = input_data.copy()
-    if input_data[config.gradient_boosting_model_config.numerical_na_not_allowed].isnull().any().any():
+    if input_data[
+        config.gradient_boosting_model_config.numerical_na_not_allowed
+    ].isnull().any().any():
         validated_data = validated_data.dropna(
-            axis=0, subset=config.gradient_boosting_model_config.numerical_na_not_allowed
+            axis=0,
+            subset=config.gradient_boosting_model_config.numerical_na_not_allowed
         )
 
     return validated_data
@@ -103,21 +104,25 @@ def drop_na_inputs(*, input_data: pd.DataFrame) -> pd.DataFrame:
 
 def validate_inputs(
     *, input_data: pd.DataFrame
-) -> t.Tuple[pd.DataFrame, t.Optional[dict]]:
+) -> tuple[pd.DataFrame, dict | None]:
     """Check model inputs for unprocessable values."""
 
-    # convert syntax error field names (beginning with numbers)
-    input_data.rename(columns=config.gradient_boosting_model_config.variables_to_rename, inplace=True)
+    # Convert syntax error field names (beginning with numbers)
+    input_data.rename(
+        columns=config.gradient_boosting_model_config.variables_to_rename,
+        inplace=True
+    )
     validated_data = drop_na_inputs(input_data=input_data)
 
-    # set many=True to allow passing in a list
+    # Set many=True to allow passing in a list
     schema = HouseDataInputSchema(many=True)
     errors = None
 
     try:
-        # replace numpy nans so that Marshmallow can validate
+        # Replace numpy nans so that Marshmallow can validate
         schema.load(validated_data.replace({np.nan: None}).to_dict(orient="records"))
     except ValidationError as exc:
-        errors = exc.messages
+        # Ensure errors is either a dict or None
+        errors = exc.messages if isinstance(exc.messages, dict) else None
 
     return validated_data, errors

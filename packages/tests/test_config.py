@@ -17,7 +17,7 @@ drop_features: YrSold
 pipeline_name: gb_regression
 pipeline_save_file: gb_regression_output_v
 target: SalePrice
-variables_to_rename: 
+variables_to_rename:
     foo: bar
 test_size: 0.1
 features:
@@ -96,6 +96,7 @@ def test_fetch_config_structure(tmpdir):
     assert hasattr(config.app_config, 'pipeline_name')
     assert config.app_config.pipeline_name == 'gb_regression'
 
+
 def test_config_validation_raises_error_for_invalid_config(tmpdir):
     # Given
     # We make use of the pytest built-in tmpdir fixture
@@ -132,4 +133,3 @@ def test_missing_config_field_raises_validation_error(tmpdir):
     # Then
     assert "Field required" in str(excinfo.value)
     assert "pipeline_name" in str(excinfo.value)
-

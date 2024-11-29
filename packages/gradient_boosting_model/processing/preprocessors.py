@@ -1,10 +1,11 @@
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+from typing import Optional, Union, List
 
 
 class SklearnTransformerWrapper(BaseEstimator, TransformerMixin):
     """
-    Wrapper for Scikit-learn pre-processing transformers, like SimpleImputer or OrdinalEncoder,
+    Wrapper for Scikit-learn pre-processing transformers,
     to apply the transformer to a specified set of variables.
 
     Parameters:
@@ -15,13 +16,21 @@ class SklearnTransformerWrapper(BaseEstimator, TransformerMixin):
         A scikit-learn transformer instance (e.g., SimpleImputer, OrdinalEncoder).
     """
 
-    def __init__(self, variables=None, transformer=None):
+    def __init__(
+            self,
+            variables: Optional[Union[List[str], str]] = None,
+            transformer: Optional[BaseEstimator] = None
+    ):
         if not variables or not transformer:
             raise ValueError("Both 'variables' and 'transformer' must be provided.")
         self.variables = variables if isinstance(variables, list) else [variables]
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: pd.Series = None):
+    def fit(
+            self,
+            X: pd.DataFrame,
+            y: Optional[pd.Series] = None
+    ) -> "SklearnTransformerWrapper":
         """
         Fits the transformer to the selected variables.
 
@@ -60,7 +69,7 @@ class SklearnTransformerWrapper(BaseEstimator, TransformerMixin):
         return X
 
     @staticmethod
-    def _validate_dataframe(X):
+    def _validate_dataframe(X: pd.DataFrame):
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input must be a pandas DataFrame.")
 
@@ -77,13 +86,23 @@ class TemporalVariableEstimator(BaseEstimator, TransformerMixin):
         The reference temporal variable.
     """
 
-    def __init__(self, variables=None, reference_variable=None):
+    def __init__(
+            self,
+            variables: Optional[Union[List[str], str]] = None,
+            reference_variable: Optional[str] = None
+    ):
         if not variables or not reference_variable:
-            raise ValueError("Both 'variables' and 'reference_variable' must be provided.")
+            raise ValueError(
+                "Both 'variables' and 'reference_variable' must be provided."
+            )
         self.variables = variables if isinstance(variables, list) else [variables]
         self.reference_variable = reference_variable
 
-    def fit(self, X: pd.DataFrame, y=None):
+    def fit(
+            self,
+            X: pd.DataFrame,
+            y: Optional[pd.Series] = None
+    ) -> "TemporalVariableEstimator":
         """
         No fitting needed; returns self for pipeline compatibility.
 
@@ -122,7 +141,7 @@ class TemporalVariableEstimator(BaseEstimator, TransformerMixin):
         return X
 
     @staticmethod
-    def _validate_dataframe(X):
+    def _validate_dataframe(X: pd.DataFrame):
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input must be a pandas DataFrame.")
 
@@ -137,14 +156,20 @@ class DropUnnecessaryFeatures(BaseEstimator, TransformerMixin):
         List of variables to drop. If a single variable, pass it as a string.
     """
 
-    def __init__(self, variables_to_drop=None):
+    def __init__(self, variables_to_drop: Optional[Union[List[str], str]] = None):
         if not variables_to_drop:
             raise ValueError("'variables_to_drop' must be provided.")
         self.variables = (
-            variables_to_drop if isinstance(variables_to_drop, list) else [variables_to_drop]
+            variables_to_drop
+            if isinstance(variables_to_drop, list)
+            else [variables_to_drop]
         )
 
-    def fit(self, X: pd.DataFrame, y=None):
+    def fit(
+            self,
+            X: pd.DataFrame,
+            y: Optional[pd.Series] = None
+    ) -> "DropUnnecessaryFeatures":
         """
         No fitting needed; returns self for pipeline compatibility.
 
@@ -181,7 +206,6 @@ class DropUnnecessaryFeatures(BaseEstimator, TransformerMixin):
         return X.drop(columns=self.variables, errors="ignore")
 
     @staticmethod
-    def _validate_dataframe(X):
+    def _validate_dataframe(X: pd.DataFrame):
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input must be a pandas DataFrame.")
-

@@ -3,7 +3,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
 from feature_engine.encoding import RareLabelEncoder
-
+from typing import cast
 from gradient_boosting_model.processing import preprocessors as pp
 from gradient_boosting_model.config.core import config
 
@@ -40,8 +40,11 @@ price_pipe = Pipeline(
             "rare_label_encoder",
             RareLabelEncoder(
                 tol=config.gradient_boosting_model_config.rare_label_tol,
-                n_categories=config.gradient_boosting_model_config.rare_label_n_categories,
-                variables=config.gradient_boosting_model_config.categorical_vars,
+                n_categories=(
+                    config.gradient_boosting_model_config.rare_label_n_categories
+                ),
+                variables=cast(str | list[str | int] | None,
+                               config.gradient_boosting_model_config.categorical_vars,)
             ),
         ),
         (
@@ -67,4 +70,3 @@ price_pipe = Pipeline(
         ),
     ]
 )
-

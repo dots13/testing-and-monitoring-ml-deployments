@@ -1,7 +1,7 @@
 from pathlib import Path
 import typing as t
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ValidationInfo
 from strictyaml import load, YAML
 
 import gradient_boosting_model
@@ -34,13 +34,13 @@ class ModelConfig(BaseModel):
 
     drop_features: str
     target: str
-    variables_to_rename: t.Dict
-    features: t.Sequence[str]
-    numerical_vars: t.Sequence[str]
-    categorical_vars: t.Sequence[str]
-    temporal_vars: str
-    numerical_vars_with_na: t.Sequence[str]
-    numerical_na_not_allowed: t.Sequence[str]
+    variables_to_rename: t.Dict[str, str]
+    features: t.Union[str, t.List[str]]
+    numerical_vars: t.List[str]
+    categorical_vars: t.Union[str, t.List[str]]
+    temporal_vars: t.Union[str, t.List[str]]
+    numerical_vars_with_na: t.List[str]
+    numerical_na_not_allowed: t.List[str]
     test_size: float
     random_state: int
     n_estimators: int
@@ -51,7 +51,7 @@ class ModelConfig(BaseModel):
     loss: str
 
     @field_validator("loss")
-    def allowed_loss_function(cls, value, values):
+    def allowed_loss_function(cls, value: str, values: ValidationInfo) -> str:
         """
         Loss function to be optimized.
 
@@ -72,6 +72,7 @@ class ModelConfig(BaseModel):
             f"the loss parameter specified: {value}, "
             f"is not in the allowed set: {allowed_loss_functions}"
         )
+
 
 class Config(BaseModel):
     """Master config object."""
@@ -129,4 +130,3 @@ def create_and_validate_config(parsed_config: t.Optional[YAML] = None) -> Config
 
 
 config = create_and_validate_config()
-
