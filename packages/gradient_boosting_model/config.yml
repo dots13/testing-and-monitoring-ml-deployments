@@ -77,7 +77,7 @@ test_size: 0.1
 random_state: 0
 
 # The number of boosting stages to perform
-n_estimators: 2
+n_estimators: 50
 
 # the minimum frequency a label should have to be considered frequent
 # and not be removed.
